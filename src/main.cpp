@@ -1,12 +1,30 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#include "I2Cdev.h"
-#include "MPU6050_6Axis_MotionApps20.h"
+// ================================================================
+// ===               ROLE DEFINE DECLARATIONS                   ===
+// ================================================================
+//Uncommente only the relative role define
+//#define RF_DATASENDER
+#define RF_DATALOGGER
+
+#ifdef RF_DATASENDER
+    #include "I2Cdev.h"
+    #include "MPU6050_6Axis_MotionApps20.h"
+#endif
+
+#ifdef RF_DATALOGGER
+    
+#endif
+
 #include "Wire.h"
 
 #include <nRF24L01.h>
 #include <RF24.h>
+
+// ================================================================
+// ===               GENERAL DEFINE DECLARATIONS                ===
+// ================================================================
 
 #define OUTPUT_READABLE_YAWPITCHROLL
 #define M_PI		3.14159265358979323846
@@ -58,11 +76,6 @@ RF24 radio(4, 5); // CE pin, CSN pin
 
 // Let these addresses be used for the pair
 uint8_t address[][6] = {"Pipe1", "Pipe2"};
-
-//Uncommente only the relative role define
-//#define RF_DATASENDER
-#define RF_DATALOGGER
-
 
 // ================================================================
 // ===                    TASKS PROGRAM LOOP                     ===
