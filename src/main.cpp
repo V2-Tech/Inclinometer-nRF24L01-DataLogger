@@ -14,7 +14,7 @@
 #endif
 
 #ifdef RF_DATALOGGER
-    
+    #include <U8g2lib.h>
 #endif
 
 #include "Wire.h"
@@ -25,13 +25,25 @@
 // ================================================================
 // ===               GENERAL DEFINE DECLARATIONS                ===
 // ================================================================
-
-#define OUTPUT_READABLE_YAWPITCHROLL
-#define M_PI		3.14159265358979323846
 #define INTERRUPT_PIN 34
 #define LED_PIN 2
 
-MPU6050 mpu;
+#ifdef RF_DATASENDER
+    #define M_PI		3.14159265358979323846
+
+    MPU6050 mpu;
+#endif
+
+#ifdef RF_DATALOGGER
+    #include <Adafruit_GFX.h>
+    #include <Adafruit_SSD1306.h>
+
+    #define SCREEN_WIDTH 128 // OLED display width, in pixels
+    #define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+    #define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+    Adafruit_SSD1306 display(-1);
+#endif
 
 TaskHandle_t IMUTaskHandle;
 TaskHandle_t RFTaskHandle;
@@ -41,6 +53,7 @@ TaskHandle_t LCDTaskHandle;
 bool blinkState = false;
 bool imustarted = false;
 
+#ifdef RF_DATASENDER
 // ================================================================
 // ===               MPU6050 DECLARATIONS                       ===
 // ================================================================
@@ -68,6 +81,7 @@ volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin h
 void dmpDataReady() {
     mpuInterrupt = true;
 }
+#endif
 
 // ================================================================
 // ===               nRF24L01 DECLARATIONS                       ===
@@ -78,8 +92,9 @@ RF24 radio(4, 5); // CE pin, CSN pin
 uint8_t address[][6] = {"Pipe1", "Pipe2"};
 
 // ================================================================
-// ===                    TASKS PROGRAM LOOP                     ===
+// ===                    TASKS PROGRAM LOOP                    ===
 // ================================================================
+#ifdef RF_DATASENDER
 void IMUTask( void * pvParameters )
 {
     Serial.printf("IMUTask running on core: %d\r\n",xPortGetCoreID());
@@ -114,6 +129,7 @@ void IMUTask( void * pvParameters )
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
+#endif
 
 void RFTrasmitTask( void * pvParameters )
 {
@@ -171,7 +187,31 @@ void LcdTask( void * pvParameters )
 
     for(;;)
     {
-        vTaskDelay(4 / portTICK_PERIOD_MS);
+        /*
+        uint16_t fps;
+        fps = execute_with_fps(draw_clip_test);
+        show_result("draw clip test", fps);
+        delay(5000);
+        fps = execute_with_fps(draw_set_screen);
+        show_result("clear screen", fps);
+        delay(5000);
+        fps = execute_with_fps(draw_char);
+        show_result("draw @", fps);
+        delay(5000);  
+        fps = execute_with_fps(draw_pixel);
+        show_result("draw pixel", fps);
+        delay(5000);
+        fps = execute_with_fps(draw_line);
+        show_result("draw line", fps);
+        */
+        display.clearDisplay();
+        display.setTextSize(1);
+        display.setTextColor(1);
+        display.setCursor(0,0);
+        display.println("Rectangle");
+        display.drawRect(0, 15, 60, 40, 1);
+        display.display();
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 }
 
@@ -252,6 +292,11 @@ void setup()
 
     // ===                    CONFIGURE IO                     === //
     pinMode(LED_PIN, OUTPUT);
+    
+    // ===                    CONFIGURE OLED                     === //
+    #ifdef RF_DATALOGGER
+        display.begin(0x02, 0x3C);
+    #endif
 
     // ===                    CONFIGURE TASKS                     === //
     #ifdef RF_DATASENDER
