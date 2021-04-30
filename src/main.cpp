@@ -35,14 +35,7 @@
 #endif
 
 #ifdef RF_DATALOGGER
-    #include <Adafruit_GFX.h>
-    #include <Adafruit_SSD1306.h>
 
-    #define SCREEN_WIDTH 128 // OLED display width, in pixels
-    #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
-    #define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-    Adafruit_SSD1306 display(-1);
 #endif
 
 TaskHandle_t IMUTaskHandle;
@@ -146,7 +139,9 @@ void RFTrasmitTask( void * pvParameters )
             sprintf(rfDataBuffer,"%.2f,%.2f,%.2f\r\n",yprDeg[0],yprDeg[1],yprDeg[2]);
             Serial.printf("rfDataBuffer length: %d\r\n",sizeof(rfDataBuffer));
             radio.write(&rfDataBuffer, sizeof(rfDataBuffer));
-
+            
+            Serial.printf("RF Data sended: %s\r\n",rfDataBuffer);
+            
             blinkState = !blinkState;
             digitalWrite(LED_PIN, blinkState);
         }
@@ -181,40 +176,17 @@ void SDTask( void * pvParameters )
     }
 }
 
+#ifdef RF_DATALOGGER
 void LcdTask( void * pvParameters )
 {
     Serial.printf("LcdTask running on core: %d\r\n",xPortGetCoreID());
 
     for(;;)
     {
-        /*
-        uint16_t fps;
-        fps = execute_with_fps(draw_clip_test);
-        show_result("draw clip test", fps);
-        delay(5000);
-        fps = execute_with_fps(draw_set_screen);
-        show_result("clear screen", fps);
-        delay(5000);
-        fps = execute_with_fps(draw_char);
-        show_result("draw @", fps);
-        delay(5000);  
-        fps = execute_with_fps(draw_pixel);
-        show_result("draw pixel", fps);
-        delay(5000);
-        fps = execute_with_fps(draw_line);
-        show_result("draw line", fps);
-        */
-        display.clearDisplay();
-        display.setTextSize(1);
-        display.setTextColor(1);
-        display.setCursor(0,0);
-        display.println("Rectangle");
-        display.drawRect(0, 15, 60, 40, 1);
-        display.display();
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        vTaskDelay(4 / portTICK_PERIOD_MS);
     }
 }
-
+#endif
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
@@ -295,7 +267,7 @@ void setup()
     
     // ===                    CONFIGURE OLED                     === //
     #ifdef RF_DATALOGGER
-        display.begin(0x02, 0x3C);
+        
     #endif
 
     // ===                    CONFIGURE TASKS                     === //
